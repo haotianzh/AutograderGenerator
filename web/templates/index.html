@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Autograder Creator</title>
+    <script src='https://kit.fontawesome.com/a076d05399.js' crossorigin='anonymous'></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="static/js/ace-builds/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+</head>
+<body>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul class=flashes>
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+    <div class="alert alert-info" role="alert">
+        <p><b>Simple instructions on Autograder Docker builder (beta):</b></p>
+        <p>1. For Number of Cases, input how many test case you want to generate </p>
+        <p>2. For submissions, each line takes a required submission filename and its corresponding compiling command (seperated by '|') ex: </p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp; HelloWorld.cpp | g++ -Wall -std=c++11 HelloWorld.cpp -o HelloWorld</p>
+        <p>3. Click Init</p>
+        <p>4. Finish all required fields</p>
+        <p>5. Click Build, Download docker image</p>
+        <p><b>Note: each test will be run with a parameter &ltFILENAME&gt which specifies input file path,
+            if no parameter needed, program will read &ltSTDIN&gt from the input file you upload.
+            If program doesn't take any kind of input, just upload an empty file
+        </b></p>
+        <p><b> You can upload multiple static files used as source
+        </b></p>
+    </div>
+    <form action="/init" method="post">
+        <div class="container-fluid p-4 my-3 bg-dark text-white rounded">
+            <h2> Autograder docker builder</h2>
+            <div class="card my-3 bg-secondary col-sm-12">
+                <div class="card-header">Basic settings</div>
+                <div class="form-group my-2 col-sm-12">
+                    <label class="col-sm-2" for="num_cases">Number of Cases:</label>
+                    <input type="text" class="col-sm-2 form-control-md rounded" id="num_cases" name="num_cases" placeholder="{{num_cases}}">
+                </div>
+
+                <div class="form-group my-2 col-sm-12">
+                    <label class="col-sm-2 mx-auto" for="submissions">Submissions:</label>
+                    <textarea class="form-control-md col-sm-6 rounded" rows="5" id="submissions" name="submissions">{{user.displayed_submissions}}</textarea>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success col-sm-1 my-2">Init</button>
+        </div>
+    </form>
+
+    {% if show_test %}
+    <form action="/upload" method="post" enctype="multipart/form-data">
+    <div class="container-fluid p-4 my-3 bg-warning rounded">
+        <div class="custom-file col-sm-8 form-control-file">
+            <label for="static">Static Files: </label>
+            <input type="file"  id="static" name="static" multiple>
+        </div>
+        {% for i in range(user.num_cases) %}
+<!--        <button type="button" class="btn btn-info">Add Test Case</button>-->
+        <div class="card my-3 bg-info col-sm-12">
+            <div class="card-header text-white">Test Case {{i}}</div>
+                <div class="form-group my-2 col-sm-12">
+                    <label class="col-sm-2" for="test_name_{{i}}">Test Case Name:</label>
+                    <input type="text" class="col-sm-2 form-control-md rounded" id="test_name_{{i}}" name="test_name_{{i}}">
+                </div>
+                <div class="form-group my-2 col-sm-12">
+                    <label class="col-sm-2" for="test_weight_{{i}}">Point:</label>
+                    <input type="text" class="col-sm-2 form-control-md rounded" id="test_weight_{{i}}" name="test_weight_{{i}}">
+                </div>
+                <div class="form-group my-2 col-sm-12">
+                  <label class="col-sm-2" for="test_for_{{i}}">Test For:</label>
+                  <select class="col-sm-3 rounded form-control-md for" id="test_for_{{i}}" name="test_for_{{i}}">
+                      <option value="none" selected disabled hidden>select a submission</option>
+                      {% for sub in user.submissions %}
+                        <option value="{{sub.name}}">{{sub.name}}</option>
+                      {% endfor %}
+                  </select>
+                </div>
+
+                <div class="form-group my-2 col-sm-12">
+                  <label class="col-sm-2" for="test_type_{{i}}">Type:</label>
+                  <select class="col-sm-3 rounded form-control-md type" id="test_type_{{i}}" name="test_type_{{i}}">
+                        <option value="none" selected disabled hidden>select a type</option>
+                        <option value="io">IO Test</option>
+                        <option value="unit">Unit Test</option>
+                  </select>
+                </div>
+
+                <!--  IO input section-->
+                <div class="form-group my-2 col-sm-12" id="io_{{i}}" style="display:none">
+                    <label class="col-sm-2" for="test_input_{{i}}"> Input: </label>
+                    <div class="custom-file col-sm-8 form-control-file">
+                        <input type="file" class="custom-file-input" id="test_input_{{i}}" name="test_input_{{i}}">
+                        <label class="custom-file-label">Select File</label>
+                    </div>
+                    <label class="col-sm-2" for="test_output_{{i}}"> Output: </label>
+                    <div class="custom-file col-sm-8 form-control-file">
+                        <input type="file" class="custom-file-input" id="test_output_{{i}}" name="test_output_{{i}}">
+                        <label class="custom-file-label">Select File</label>
+                    </div>
+                </div>
+
+                <!--  Unit Test input section-->
+                <div class="form-group my-2 col-sm-12" id="unit_{{i}}" style="display:none">
+                    <label class="col-sm-2" for="editor_{{i}}" style="vertical-align: top"> Test Code: </label>
+                    <div class="col-sm-9 form-control-sm" style="display: inline-block;">
+                        <div class="editor col-sm-8" id="editor_{{i}}" style="height:500px; font-size: 12pt"></div>
+                    </div>
+                    <textarea class="form-control" name="editor_{{i}}" style="display:none"></textarea>
+
+                    <label class="col-sm-2" for="run_{{i}}" style="vertical-align: top"> Run Code: </label>
+                    <div class="col-sm-9 form-control-sm" style="display: inline-block;">
+                        <div class="run col-sm-8" id="run_{{i}}" style="height:300px; font-size: 12pt"></div>
+                    </div>
+                    <textarea class="form-control" name="run_{{i}}" style="display:none"></textarea>
+                </div>
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-info col-sm-1 my-2">Build</button>
+    </div>
+    </form>
+    {% endif %}
+    {% if download %}
+    <button class="btn btn-default col-sm-1 center">
+        <a href="{{download_url}}"><img src="static/docker.svg" width="120" /></a>
+    </button>
+    {% endif %}
+<!-- customized js-->
+<script>
+    $(".custom-file-input").on("change", function () {
+        var fileName = $(this).val().split("\\").pop();
+        $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+    });
+//    listen on selecting unit test or io test
+    $(".type").on("change", function () {
+       if (this.value === "io"){
+           console.log('its io');
+           num = $(this).attr('id').split('_')[2];
+           $(`#io_${num}`).show();
+           $(`#unit_${num}`).hide();
+       }else{
+           console.log('its unit');
+           num = $(this).attr('id').split('_')[2];
+           init_editor();
+           $(`#io_${num}`).hide();
+           $(`#unit_${num}`).show();
+       }
+    });
+
+    $(".for").on("change", function () {
+        init_editor();
+    });
+</script>
+
+<script>
+    init_editor = function(){
+
+
+        $(".editor").each(function(index){
+            var editor;
+            var textarea;
+            var name;
+            var index;
+            editor = ace.edit(this);
+            console.log(this.id)
+            index = this.id.split('_')[1];
+            name = `editor_${index}`;
+            textarea = $(`textarea[name=${name}]`);
+            console.log(textarea.attr('name'));
+            editor.setTheme("ace/theme/dracula");
+            editor.session.setMode("ace/mode/c_cpp");
+            editor.getSession().on("change", function () {
+                textarea.val(editor.getSession().getValue());
+                console.log(editor.getSession().getValue());
+            });
+        });
+
+        $(".run").each(function(index){
+            var editor;
+            var textarea;
+            var name;
+            var submission;
+            var index;
+            editor = ace.edit(this);
+            console.log(this.id)
+            index = this.id.split('_')[1];
+            name = `run_${index}`;
+            textarea = $(`textarea[name=${name}]`);
+            // subname = `#test_for_{index}`;
+            testfor = $(`select[name=test_for_${index}]`).val();
+            editor.setTheme("ace/theme/dracula");
+            editor.setValue("#!/usr/bin/env bash\n" +
+                "#  compile test:\n" +
+                "#  test-main.o : this is compiled in bootstrap.init and can be linked with all catch tests\n" +
+                "#  -I ../      : indicates that there are files in the parent directory that we '#include' in our test (these are the\n" +
+                "#                files that were submitted by the student).\n" +
+                "#  -o <test_name> : name the compiled executable\n" +
+                "\n" +
+                `cp /autograder/submission/${testfor} .`);
+            editor.session.setMode("ace/mode/sh");
+            editor.getSession().on("change", function () {
+                textarea.val(editor.getSession().getValue());
+                console.log(editor.getSession().getValue());
+            });
+        });
+    }
+
+</script>
+</body>
+</html>
