@@ -153,24 +153,31 @@ def save_static(user, files):
         for file in files:
             file.save(os.path.join(UPLOAD_FOLDER, user.uid, 'static', file.filename))
 
+
 def get_submission_specs(submissions_str):
     submissions = []
     submissions_str = submissions_str.split('\n')
     for submission_str in submissions_str:
         submission_str = submission_str.strip()
         specs = submission_str.split('|')
-        if len(specs) != 2:
+        if len(specs) > 2:
             return 'incorrect submission information'
-        name, compile_cmd = (val.strip() for val in specs)
-        # generate executing command by default for C++ `g++ xxx -o xxx ...`
-        execute_cmd_finder = re.findall(r'-o (\S+)', compile_cmd)
-        if execute_cmd_finder:
-            execute_cmd = f'{Config.SOURCE}/{execute_cmd_finder[0]}'
-        else:
-            return 'compiled output not specified'
-        submission = Submission(name=name, compile_command=compile_cmd, execute_command=execute_cmd)
-        print(name, compile_cmd, execute_cmd)
-        submissions.append(submission)
+        if len(specs) == 2:
+            name, compile_cmd = (val.strip() for val in specs)
+            # generate executing command by default for C++ `g++ xxx -o xxx ...`
+            execute_cmd_finder = re.findall(r'-o (\S+)', compile_cmd)
+            if execute_cmd_finder:
+                execute_cmd = f'{Config.SOURCE}/{execute_cmd_finder[0]}'
+            else:
+                return 'compiled output not specified'
+            submission = Submission(name=name, compile_command=compile_cmd, execute_command=execute_cmd)
+            print(name, compile_cmd, execute_cmd)
+            submissions.append(submission)
+        elif len(specs) == 1:
+            name = specs[0].strip()
+            submission = Submission(name=name, compile_command='', execute_command='')
+            print(name, '', '')
+            submissions.append(submission)
     return submissions        
 
 
