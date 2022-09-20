@@ -102,6 +102,7 @@ def upload():
         case_names = set()
         form = request.form
         files = request.files
+        print('----', files)
         save_static(user, files.getlist('static'))
         for i in range(user.num_cases):
             name = form[f'test_name_{i}']
@@ -148,9 +149,9 @@ def back_to_previous(msg, endpoint):
 
 
 def save_static(user, files):
-    if files:
-        make_dirs(os.path.join(UPLOAD_FOLDER, user.uid, 'static'))
-        for file in files:
+    make_dirs(os.path.join(UPLOAD_FOLDER, user.uid, 'static'))
+    for file in files:
+        if file.filename.strip():
             file.save(os.path.join(UPLOAD_FOLDER, user.uid, 'static', file.filename))
 
 
@@ -247,8 +248,10 @@ def build_all_files(user):
     for case in user.test_cases:
         if isinstance(case, IOCase):
             make_dirs(os.path.join(UPLOAD_FOLDER, user.uid, 'iotests', case.name))
-            case.test_in.save(os.path.join(UPLOAD_FOLDER, user.uid, 'iotests', case.name, 'input'))
-            case.test_out.save(os.path.join(UPLOAD_FOLDER, user.uid, 'iotests', case.name, 'output'))
+            if case.test_in.filename:
+                case.test_in.save(os.path.join(UPLOAD_FOLDER, user.uid, 'iotests', case.name, 'input'))
+            if case.test_out.filename:
+                case.test_out.save(os.path.join(UPLOAD_FOLDER, user.uid, 'iotests', case.name, 'output'))
             # create `run.sh`
             with open(os.path.join(UPLOAD_FOLDER, user.uid, 'iotests', case.name, 'run.sh'), 'w') as out:
                 out.write(create_run_sh_file(find_submission(user, case.test_for).execute_command, posixpath.join(Config.SOURCE, 'iotests', case.name, 'input')))
