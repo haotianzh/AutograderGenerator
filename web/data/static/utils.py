@@ -86,7 +86,7 @@ def load_yaml(file: str):
 
 
 def generate_unit_test(dir_name):
-    settings = load_yaml(os.path.join(Config.UNIT_TEST_DIR, dir_name, 'settings.yml'))
+    settings = load_yaml(os.path.join(Config.UNIT_TEST_DIR, dir_name, 'settings.yaml'))
     def run_test():
         run_path = os.path.join(Config.UNIT_TEST_DIR, dir_name, 'run.sh')
         os.chmod(run_path, os.stat(run_path).st_mode | stat.S_IEXEC)
