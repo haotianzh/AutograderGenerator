@@ -2,7 +2,7 @@ import unittest
 import os
 import os.path
 import subprocess
-from gradescope_utils.autograder_utils.decorators import weight
+from gradescope_utils.autograder_utils.decorators import weight, visibility
 import yaml
 
 IO_TEST_DIR = '/autograder/source/iotests'  # directory where io tests reside
@@ -48,6 +48,7 @@ class IOTest(type):
 
 
         @weight(settings.get('weight', 1))
+        @visibility(settings.get('visibility', 'visible'))
         def fn(self):
             proc = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdin = load_test_file('input')

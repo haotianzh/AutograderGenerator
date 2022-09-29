@@ -96,6 +96,17 @@
                   </select>
                 </div>
 
+              <div class="form-group my-2 col-sm-12">
+                  <label class="col-sm-2" for="test_vis_{{i}}">Visibility:</label>
+                  <select class="col-sm-3 rounded form-control-md type" id="test_vis_{{i}}" name="test_vis_{{i}}">
+                        <option value="none" selected disabled hidden>select a type</option>
+                        <option value="hidden">hidden</option>
+                        <option value="visible">visible</option>
+                        <option value="after_due_date">after_due_date</option>
+                        <option value="after_published">after_published</option>
+                  </select>
+                </div>
+
                 <!--  IO input section-->
                 <div class="form-group my-2 col-sm-12" id="io_{{i}}" style="display:none">
                     <label class="col-sm-2" for="test_input_{{i}}"> Input: </label>
@@ -164,8 +175,6 @@
 
 <script>
     init_editor = function(){
-
-
         $(".editor").each(function(index){
             var editor;
             var textarea;
@@ -176,6 +185,7 @@
             index = this.id.split('_')[1];
             name = `editor_${index}`;
             textarea = $(`textarea[name=${name}]`);
+            testfor = $(`select[name=test_for_${index}]`).val();
             console.log(textarea.attr('name'));
             editor.setTheme("ace/theme/dracula");
             editor.session.setMode("ace/mode/c_cpp");
@@ -183,6 +193,9 @@
                 textarea.val(editor.getSession().getValue());
                 console.log(editor.getSession().getValue());
             });
+            editor.setValue("using namespace std;\n" +
+                `#include \"${testfor}\"\n` +
+                "#include \"catch.hpp\"");
         });
 
         $(".run").each(function(index){
@@ -199,19 +212,22 @@
             // subname = `#test_for_{index}`;
             testfor = $(`select[name=test_for_${index}]`).val();
             editor.setTheme("ace/theme/dracula");
+            editor.getSession().on("change", function () {
+                textarea.val(editor.getSession().getValue());
+                console.log(editor.getSession().getValue());
+            });
             editor.setValue("#!/usr/bin/env bash\n" +
                 "#  compile test:\n" +
                 "#  test-main.o : this is compiled in bootstrap.init and can be linked with all catch tests\n" +
                 "#  -I ../      : indicates that there are files in the parent directory that we '#include' in our test (these are the\n" +
                 "#                files that were submitted by the student).\n" +
                 "#  -o <test_name> : name the compiled executable\n" +
-                "\n" +
-                `cp /autograder/submission/${testfor} .`);
+                `cp /autograder/submission/${testfor} .\n` +
+                "#  -o test.exe : name the compiled executable 'test.exe'\n" +
+                "g++ -O4 -std=c++11 test.cpp ../test-main.o -I ../ -o test\n" +
+                "#  execute the test\n" +
+                "./test\n");
             editor.session.setMode("ace/mode/sh");
-            editor.getSession().on("change", function () {
-                textarea.val(editor.getSession().getValue());
-                console.log(editor.getSession().getValue());
-            });
         });
     }
 

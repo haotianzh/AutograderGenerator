@@ -32,22 +32,23 @@ class Submission(object):
 
 
 class Case(object):
-    def __init__(self, name, point, test_for):
+    def __init__(self, name, point, test_for, test_vis):
         self.name = name
         self.point = point
         self.test_for = test_for
+        self.test_vis = test_vis
 
 
 class IOCase(Case):
-    def __init__(self, name, point, test_for, test_in, test_out):
-        super().__init__(name, point, test_for)
+    def __init__(self, name, point, test_for, test_vis, test_in, test_out):
+        super().__init__(name, point, test_for, test_vis)
         self.test_in = test_in
         self.test_out = test_out
 
 
 class UnitCase(Case):
-    def __init__(self, name, point, test_for, test_code, run_code):
-        super().__init__(name, point, test_for)
+    def __init__(self, name, point, test_for, test_vis, test_code, run_code):
+        super().__init__(name, point, test_for, test_vis)
         self.test_code = test_code
         self.run_code = run_code
 
@@ -109,6 +110,7 @@ def upload():
             point = form[f'test_weight_{i}']
             test_for = form[f'test_for_{i}']
             test_type = form[f'test_type_{i}']
+            test_vis = form[f'test_vis_{i}']
             # check filename and duplication
             if name.strip() == '':
                 return back_to_previous('case name is empty', 'init')
@@ -122,13 +124,13 @@ def upload():
                 test_out = files[f'test_output_{i}']
                 if test_in.filename.strip() == '' or test_out.filename.strip() == '':
                     return back_to_previous('input /or output can not be none', 'init')
-                case = IOCase(name, point, test_for, test_in, test_out)
+                case = IOCase(name, point, test_for, test_vis, test_in, test_out)
                 user.test_cases.append(case)
             else:
                 test_code = form[f'editor_{i}']
                 run_code = form[f'run_{i}']
                 print('run code', run_code)
-                case = UnitCase(name, point, test_for, test_code, run_code)
+                case = UnitCase(name, point, test_for, test_vis, test_code, run_code)
                 user.test_cases.append(case)
         # build IO tests and unit tests
         build(user)
@@ -210,7 +212,7 @@ def create_config_file(user):
     return file_formatted
 
 
-def create_settings_file(weight=1, msg='', show_output=True, visibility='hidden'):
+def create_settings_file(weight=1, msg='', show_output=True, visibility='visible'):
     settings = {'weight': weight,
             'msg': msg,
             'show_output': show_output,
@@ -276,7 +278,7 @@ def build_all_files(user):
                         out.write('\n')
             # create `settings.yaml`
             with open(os.path.join(UPLOAD_FOLDER, user.uid, 'unittests', case.name, 'settings.yaml'), 'w') as out:
-                out.write(create_settings_file(weight=case.point, msg=f'Faild to correctly run {case.test_for}'))
+                out.write(create_settings_file(weight=case.point, msg=f'Faild to correctly run {case.test_for}', visibility=case.test_vis))
             # cp catch related files
             os.system(f'cp {UPLOAD_FOLDER}/static/makefile {UPLOAD_FOLDER}/{user.uid}/unittests')
             os.system(f'cp {UPLOAD_FOLDER}/static/test-main.cpp {UPLOAD_FOLDER}/{user.uid}/unittests')

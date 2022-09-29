@@ -96,7 +96,7 @@ def generate_unit_test(dir_name):
                                 stderr=subprocess.STDOUT, timeout=settings.get('timeout', None))
 
     @weight(settings.get('weight', 1))
-    @visibility(settings.get('visibility', 'hidden'))
+    @visibility(settings.get('visibility', 'visible'))
     def wrapper(self):
         show_output = settings.get('show_output', True)
         try:
