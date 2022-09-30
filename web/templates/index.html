@@ -71,11 +71,11 @@
             <div class="card-header text-white">Test Case {{i}}</div>
                 <div class="form-group my-2 col-sm-12">
                     <label class="col-sm-2" for="test_name_{{i}}">Test Case Name:</label>
-                    <input type="text" class="col-sm-2 form-control-md rounded" id="test_name_{{i}}" name="test_name_{{i}}">
+                    <input type="text" class="col-sm-2 form-control-md rounded for" id="test_name_{{i}}" name="test_name_{{i}}" value="TEST {{i}}">
                 </div>
                 <div class="form-group my-2 col-sm-12">
                     <label class="col-sm-2" for="test_weight_{{i}}">Point:</label>
-                    <input type="text" class="col-sm-2 form-control-md rounded" id="test_weight_{{i}}" name="test_weight_{{i}}">
+                    <input type="text" class="col-sm-2 form-control-md rounded" id="test_weight_{{i}}" name="test_weight_{{i}}" value="10">
                 </div>
                 <div class="form-group my-2 col-sm-12">
                   <label class="col-sm-2" for="test_for_{{i}}">Test For:</label>
@@ -90,18 +90,18 @@
                 <div class="form-group my-2 col-sm-12">
                   <label class="col-sm-2" for="test_type_{{i}}">Type:</label>
                   <select class="col-sm-3 rounded form-control-md type" id="test_type_{{i}}" name="test_type_{{i}}">
-                        <option value="none" selected disabled hidden>select a type</option>
+<!--                        <option value="none" selected disabled hidden>select a type</option>-->
                         <option value="io">IO Test</option>
-                        <option value="unit">Unit Test</option>
+                        <option value="unit" selected>Unit Test</option>
                   </select>
                 </div>
 
               <div class="form-group my-2 col-sm-12">
                   <label class="col-sm-2" for="test_vis_{{i}}">Visibility:</label>
                   <select class="col-sm-3 rounded form-control-md type" id="test_vis_{{i}}" name="test_vis_{{i}}">
-                        <option value="none" selected disabled hidden>select a type</option>
+<!--                        <option value="none" selected disabled hidden>select a type</option>-->
                         <option value="hidden">hidden</option>
-                        <option value="visible">visible</option>
+                        <option value="visible" selected>visible</option>
                         <option value="after_due_date">after_due_date</option>
                         <option value="after_published">after_published</option>
                   </select>
@@ -109,7 +109,7 @@
 
                 <!--  IO input section-->
                 <div class="form-group my-2 col-sm-12" id="io_{{i}}" style="display:none">
-                    <label class="col-sm-2" for="test_input_{{i}}"> Input: </label>
+                    <label class="col-sm-2" for="test_input_{{i}}">Input: </label>
                     <div class="custom-file col-sm-8 form-control-file">
                         <input type="file" class="custom-file-input" id="test_input_{{i}}" name="test_input_{{i}}">
                         <label class="custom-file-label">Select File</label>
@@ -180,10 +180,12 @@
             var textarea;
             var name;
             var index;
+            var subname;
             editor = ace.edit(this);
             console.log(this.id)
             index = this.id.split('_')[1];
             name = `editor_${index}`;
+            subname = $(`input[name=test_name_${index}]`).val();
             textarea = $(`textarea[name=${name}]`);
             testfor = $(`select[name=test_for_${index}]`).val();
             console.log(textarea.attr('name'));
@@ -193,9 +195,17 @@
                 textarea.val(editor.getSession().getValue());
                 console.log(editor.getSession().getValue());
             });
-            editor.setValue("using namespace std;\n" +
+            editor.setValue(
                 `#include \"${testfor}\"\n` +
-                "#include \"catch.hpp\"");
+                "#include \"catch.hpp\"\n" +
+                "#include <cstring>\n" +
+                "#include <string>\n" +
+                "#include <set>\n" +
+                "#include <map>\n" +
+                "#include <vector>\n" +
+                "using namespace std;\n" +
+                `TEST_CASE(\"${subname}\", \"CPP\"){\n`+
+                "\n\n\n}", 1);
         });
 
         $(".run").each(function(index){
@@ -222,14 +232,26 @@
                 "#  -I ../      : indicates that there are files in the parent directory that we '#include' in our test (these are the\n" +
                 "#                files that were submitted by the student).\n" +
                 "#  -o <test_name> : name the compiled executable\n" +
-                `cp /autograder/submission/${testfor} .\n` +
+                "cp /autograder/submission/*.cpp .\n" +
+                "cp /autograder/submission/*.hpp .\n" +
                 "#  -o test.exe : name the compiled executable 'test.exe'\n" +
                 "g++ -O4 -std=c++11 test.cpp ../test-main.o -I ../ -o test\n" +
                 "#  execute the test\n" +
-                "./test\n");
+                "./test\n", 1);
             editor.session.setMode("ace/mode/sh");
         });
+
     }
+
+        // set to unittest as default
+    $(".type").each(function(index){
+        console.log('---');
+        num = $(this).attr('id').split('_')[2];
+        console.log(num+ '---');
+        init_editor();
+        $(`#io_${num}`).hide();
+        $(`#unit_${num}`).show();
+    });
 
 </script>
 </body>
