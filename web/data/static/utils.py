@@ -102,10 +102,10 @@ def generate_unit_test(dir_name):
         try:
             run_test()
         except subprocess.CalledProcessError as e:  # test script returned non-zero
-            msg = '{}\n\n{}'.format(settings.get('message', ''), e.output.decode() if show_output else '')
+            msg = '{}\n\n{}'.format(settings.get('message', ''), e.output if show_output else '')
             raise Exception(msg)
         except subprocess.TimeoutExpired as e:
-            msg = '{}\n\n{}'.format('Test timed out', e.output.decode() if show_output else '')
+            msg = '{}\n\n{}'.format('Test timed out', e.output if show_output else '')
             raise Exception(msg)
 
     wrapper.__doc__ = '{}'.format(settings.get('name', os.path.basename(dir_name)))
