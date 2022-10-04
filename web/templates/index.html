@@ -169,11 +169,21 @@
     });
 
     $(".for").on("change", function () {
-        init_editor();
+        refresh_editor();
     });
 </script>
 
 <script>
+    refresh_editor = function(){
+        $(".editor").each(function(index){
+            var editor = ace.edit(this);
+            var content = editor.getSession().getValue();
+            var index = this.id.split('_')[1];
+            var testfor = $(`select[name=test_for_${index}]`).val();
+            editor.setValue(`#include \"${testfor}\"\n` + content.split('\n').slice(1).join("\n"), 1);
+            // console.log(content.split('\n').slice(1).join("\n"));
+        });
+    }
     init_editor = function(){
         $(".editor").each(function(index){
             var editor;
@@ -203,8 +213,18 @@
                 "#include <set>\n" +
                 "#include <map>\n" +
                 "#include <vector>\n" +
+                "#include <chrono> \n" +
+                "using namespace std::chrono;\n" +
                 "using namespace std;\n" +
                 `TEST_CASE(\"${subname}\", \"CPP\"){\n`+
+                "    auto start = high_resolution_clock::now();\n" +
+                "    // run test\n" +
+                "    auto stop = high_resolution_clock::now();\n" +
+                "    auto duration = duration_cast<microseconds>(stop - start);\n" +
+                " \n" +
+                "    // check\n" +
+                "    REQUIRE(1 == 1 );\n" +
+                "    REQUIRE(duration.count() < 1000000);\n" +
                 "\n\n\n}", 1);
         });
 
@@ -233,7 +253,7 @@
                 "#                files that were submitted by the student).\n" +
                 "#  -o <test_name> : name the compiled executable\n" +
                 "cp /autograder/submission/*.cpp .\n" +
-                "cp /autograder/submission/*.hpp .\n" +
+                "cp /autograder/submission/*.h .\n" +
                 "#  -o test.exe : name the compiled executable 'test.exe'\n" +
                 "g++ -O4 -std=c++11 test.cpp ../test-main.o -I ../ -o test\n" +
                 "#  execute the test\n" +
